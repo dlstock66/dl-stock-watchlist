@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 DL's 美股 Watch List</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --success: #34a853;
+            --warning: #fbbc04;
+            --danger: #ea4335;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #202124;
+            --text-secondary: #5f6368;
+            --border: #dadce0;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%);
+            color: white;
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+        
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+        
+        .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+        }
+        
+        .search-box input:focus { border-color: var(--primary); }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .filter-btn:not(.active) {
+            background: #e8f0fe;
+            color: var(--primary);
+        }
+        
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+        }
+        
+        .stock-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stock-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .ticker {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .market-cap {
+            background: #f1f3f4;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+        
+        .name { font-weight: 600; margin-bottom: 8px; color: var(--text); }
+        
+        .priority-high {
+            background: #e6f4ea;
+            color: #137333;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .sector-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            margin-right: 8px;
+        }
+        
+        .tag-original { background: #e8f0fe; color: #1a73e8; }
+        .tag-new { background: #fff3e0; color: #e65100; }
+        
+        .description {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .description-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        
+        .highlight-item {
+            padding: 4px 0;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+        
+        .highlight-emoji {
+            margin-right: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            margin-top: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.8em; }
+            .stock-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 DL's 美股 Watch List</h1>
+            <p>2026年2月5日更新 - 42隻股票 | 10個板塊</p>
+            <div class="stats-bar">
+                <div class="stat-item">42 隻股票</div>
+                <div class="stat-item">10 個板塊</div>
+                <div class="stat-item">🔥 5 隻必睇</div>
+            </div>
+        </header>
+        
+        <div class="search-box">
+            <input type="text" id="search" placeholder="🔍 搜尋股票 (輸入代號或名稱)...">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="hot">🔥 必睇</button>
+                <button class="filter-btn" data-filter="space">🚀 太空</button>
+                <button class="filter-btn" data-filter="defense">🛡️ 國防</button>
+                <button class="filter-btn" data-filter="energy">⚡ 能源</button>
+                <button class="filter-btn" data-filter="semiconductor">💾 半導體</button>
+                <button class="filter-btn" data-filter="ai">☁️ AI</button>
+                <button class="filter-btn" data-filter="network">📡 網絡</button>
+                <button class="filter-btn" data-filter="power">⚙️ 電力</button>
+                <button class="filter-btn" data-filter="mining">⛏️ 採礦</button>
+                <button class="filter-btn" data-filter="geo">🛰️ 定位</button>
+            </div>
+        </div>
+        
+        <div class="stock-grid" id="stockGrid"></div>
+        
+        <div class="footer">
+            <p>📅 Last Updated: 2026-02-05</p>
+            <p>🔍 Research by: 擎天柱 (Optimus Prime)</p>
+            <p>🎯 Data Sources: Yahoo Finance, Reddit, X, Financial Forums</p>
+        </div>
+    </div>
+    
+    <script>
+        const stocks = [
+            // Top 5 - Hot
+            {ticker: "RKLB", name: "Rocket Lab", market_cap: "~$12B", sector: "hot", sector_name: "🚀 太空", status: "原有", priority: "high", priority_text: "🔥 必睇", highlights: [
+                "🏆 小型衛星發射市場領導者 - Electron火箭專攻50kg以下小型衛星",
+                "🔄 成功回收再用 - 第一級火箭成功回收再用",
+                "📡 NASA Artemis任務 - 合作夥伴",
+                "💰 美軍合約 - 美國太空軍數百萬美元合約"
+            ]},
+            {ticker: "MDA", name: "MDA Space", market_cap: "~$5B", sector: "hot", sector_name: "🚀 太空", status: "新增", priority: "high", priority_text: "🔥 必睇", highlights: [
+                "🛰️ 太空機械臂之王 - 國際太空站Canadarm2製造商",
+                "🚀 Artemis核心夥伴 - 為Artemis III提供月球太空衣系統",
+                "📡 SAR雷達技術 - 全球最先進商業SAR成像衛星",
+                "🌐 OneWeb衛星 - 製造數百顆競爭對手衛星"
+            ]},
+            {ticker: "OKLO", name: "Oklo Inc", market_cap: "~$7B", sector: "hot", sector_name: "⚡ 能源", status: "原有", priority: "high", priority_text: "🔥 必睇 - 2025年升570%", highlights: [
+                "⚛️ 首間獲批SMR - NRC批准小型模塊化核反應堆",
+                "🏭 首個商業電廠 - 選址愛達荷國家實驗室",
+                "💡 AI數據中心需求 - 低碳能源受惠者",
+                "💰 微軟/Google投資 - 支持AI數據中心低碳方案"
+            ]},
+            {ticker: "PLUG", name: "Plug Power", market_cap: "~$2B", sector: "hot", sector_name: "⚡ 能源", status: "新增", priority: "high", priority_text: "🔥 必睇", highlights: [
+                "🔋 氫能全產業鏈 - 從製氫、儲氫到燃料電池",
+                "🚛 物流電動化 - Amazon/Walmart電動叉車氫燃料系統",
+                "✈️ 航空氫能 - 與空中巴士合作開發氫燃料飛機",
+                "🏭 電解槽製造 - 全球最大製造商之一"
+            ]},
+            {ticker: "SIMO", name: "Silicon Motion", market_cap: "~$5B", sector: "hot", sector_name: "💾 半導體", status: "新增", priority: "high", priority_text: "🔥 必睇 - Nvidia收購傳聞", highlights: [
+                "💾 SSD控制器之王 - 全球最大NAND Flash控制晶片供應商",
+                "🤝 Nvidia收購傳聞 - 2024年市場傳聞股價大升",
+                "📈 1年升139% - 業績超預期",
+                "🇨🇳 中國市場 - 最大SSD控制晶片供應商"
+            ]},
+            
+            // Space
+            {ticker: "LUNR", name: "Intuitive Machines", market_cap: "~$2B", sector: "space", sector_name: "🚀 太空", status: "原有", highlights: [
+                "🏆 首間成功登月 - 2024年首間成功登月私企",
+                "🚀 NASA Artemis合約 - 數百萬美元合約",
+                "🪐 Micro-Nova無人機 - 月球表面跳躍推進系統",
+                "💼 目標價$26 - Cantor Fitzgerald Overweight"
+            ]},
+            {ticker: "ASTS", name: "AST SpaceMobile", market_cap: "~$5B", sector: "space", sector_name: "🚀 太空", status: "原有", highlights: [
+                "📱 太空手機網絡 - 衞星直接連接手機",
+                "🌍 全球5G覆蓋 - 偏遠地區都用得到",
+                "💰 AT&T/Verizon投資 - 電信巨頭支持",
+                "🚀 2025商業化 - 計劃2025年提供服務"
+            ]},
+            {ticker: "SPIR", name: "Spire Global", market_cap: "~$500M", sector: "space", sector_name: "🚀 太空", status: "新增", highlights: [
+                "🛰️ 100+顆衞星 - Lemur衞星組網",
+                "🌤️ 天氣預測數據 - 商業天氣射電氣象儀器",
+                "📊 即時數據 - 每日3000萬+數據點",
+                "✈️ 航運追蹤 - 全球航空與航運即時監測"
+            ]},
+            {ticker: "PL", name: "Planet Labs", market_cap: "~$3B", sector: "space", sector_name: "🚀 太空", status: "原有", highlights: [
+                "🌍 200+衞星 - Dove衞星每日全球成像",
+                "🔍 每日全球覆蓋 - 唯一做到每日覆蓋陸地",
+                "🌱 環境監測 - 亞馬遜森林/農業監測",
+                "🏛️ 政府客戶 - NASA/USDA/環保署"
+            ]},
+            {ticker: "BKSY", name: "BlackSky", market_cap: "~$1B", sector: "space", sector_name: "🚀 太空", status: "原有", highlights: [
+                "🎯 15分鐘成像 - 最快重訪速度",
+                "💼 美國政府客戶 - 國防部/情報機構",
+                "🗺️ Spectra AI平台 - 即時影像分析",
+                "✈️ 航運追蹤 - 全球港口即時監測"
+            ]},
+            {ticker: "SATS", name: "EchoStar", market_cap: "~$10B", sector: "space", sector_name: "🚀 太空", status: "原有", highlights: [
+                "📡 衞星互聯網 - HughesNet美國最大供應商",
+                "🌍 偏遠地區覆蓋 - 互聯網服務",
+                "💰 NASA合約 - 深空網絡技術支持",
+                "📱 5G頻譜 - DISH Network子公司"
+            ]},
+            {ticker: "RDW", name: "Redwire", market_cap: "~$300M", sector: "space", sector_name: "🚀 太空", status: "原有", highlights: [
+                "🏭 太空3D打印 - 唯一在太空打印大型金屬",
+                "🧪 材料科學 - 先進太空材料研發",
+                "🛠️ NASA合作 - Artemis太空製造技術",
+                "🌱 太空農業 - 長期任務食物生產"
+            ]},
+            {ticker: "KAI", name: "Karmanor Holdings", market_cap: "~$2B", sector: "space", sector_name: "🚀 太空", status: "新增", highlights: [
+                "🏭 火箭硬件 - 衞星/火箭部件製造商",
+                "🔧 推進系統 - 衞星推進系統專業",
+                "🌍 歐洲市場 - 太空機構客戶",
+                "💼 軍事應用 - 歐洲國防合約"
+            ]},
+            {ticker: "Graham", name: "Graham Corp", market_cap: "~$1B", sector: "space", sector_name: "🚀 太空", status: "新增", highlights: [
+                "⚙️ 真空設備 - 太空/半導體行業領導者",
+                "🔬 NASA供應商 - 測試設備",
+                "🏭 半導體需求 - AI芯片製造對真空設備大增",
+                "💰 國防合約 - 美國海軍/陸軍"
+            ]},
+            
+            // Defense
+            {ticker: "KTOS", name: "Kratos Defense", market_cap: "~$6B", sector: "defense", sector_name: "🛡️ 國防", status: "原有", highlights: [
+                "🚁 軍用無人機 - Jet Powered UAV/導彈系統",
+                "🎯 高超音速武器 - 導彈防禦系統",
+                "📈 1年升165% - 國防開支增加受惠",
+                "🏆 Keybanc評級 - Overweight目標價$130+"
+            ]},
+            {ticker: "BWXT", name: "BWX Technologies", market_cap: "~$13B", sector: "defense", sector_name: "🛡️ 國防", status: "原有", highlights: [
+                "⚛️ 核燃料獨家 - 美國海軍核燃料製造商",
+                "🔬 NASA合作 - Artemis核推進技術",
+                "🏥 醫療同位素 - 癌症治療放射性藥物",
+                "🔒 安全許可 - 最高機密安全認證"
+            ]},
+            {ticker: "AVAV", name: "AeroVironment", market_cap: "~$7B", sector: "defense", sector_name: "🛡️ 國防", status: "新增", highlights: [
+                "🛸 RQ-11 Raven - 美軍最廣泛使用小型偵察無人機",
+                "💣 Switchblade - 遊蕩彈藥領導者",
+                "🇺🇦 烏克蘭受惠 - 大量供應烏克蘭",
+                "🎖️ 北約標準 - 北約成員國標準裝備"
+            ]},
+            {ticker: "HWM", name: "Howmet Aerospace", market_cap: "~$18B", sector: "defense", sector_name: "🛡️ 國防", status: "新增", highlights: [
+                "✈️ Boeing/空客供應商 - 最大結構件供應商",
+                "🔧 發動機部件 - 渦輪葉片/結構件",
+                "💼 F-35戰機 - 軍用戰機供應商",
+                "🔩 鈦合金技術 - 全球領先鈦合金製造"
+            ]},
+            {ticker: "MRCY", name: "Mercury Systems", market_cap: "~$6B", sector: "defense", sector_name: "🛡️ 國防", status: "新增", highlights: [
+                "💾 國防半導體 - 安全數據處理/存儲系統",
+                "🧠 AI數據融合 - 軍用AI傳感器融合",
+                "🔒 最高機密 - 處理美國最高機密數據",
+                "🛡️ 導彈防禦 - 愛國者/THAAD系統"
+            ]},
+            {ticker: "PDYN", name: "Palomar Defense", market_cap: "~$??M", sector: "defense", sector_name: "🛡️ 國防", status: "新增", highlights: [
+                "🤖 AI自主導航 - AI驅動自主飛行/導航",
+                "🛸 軍用無人機 - 小型戰術無人機",
+                "🛰️ 軍事應用 - 偵察/監控/情報收集",
+                "💰 早期增長 - 國防科技投資熱點"
+            ]},
+            
+            // Energy
+            {ticker: "SMR", name: "NuScale Power", market_cap: "~$4B", sector: "energy", sector_name: "⚡ 能源", status: "原有", highlights: [
+                "⚛️ NRC批准SMR - 全球首間獲批小型模塊化核反應堆",
+                "🏭 77MW電廠 - NuScale Power Module",
+                "💰 目標價$34 - 分析師平均目標價",
+                "🔬 NASA合作 - 核推進技術"
+            ]},
+            {ticker: "LEU", name: "Centrus Energy", market_cap: "~$3B", sector: "energy", sector_name: "⚡ 能源", status: "原有", highlights: [
+                "⛽ 濃縮鈾供應商 - 美國唯一民用濃縮鈾生產商",
+                "💰 HALEU獨家 - 高階低濃縮鈾主要供應商",
+                "🌍 能源安全 - 美國本土核燃料鏈",
+                "⚓ 軍用燃料 - 核動力艦艇/潛艇"
+            ]},
+            {ticker: "BE", name: "Bloom Energy", market_cap: "~$4B", sector: "energy", sector_name: "⚡ 能源", status: "原有", highlights: [
+                "🔋 燃料電池 - 固體氧化物直接發電",
+                "💼 數據中心 - Google/Microsoft採用",
+                "🌱 碳減排 - 效率比傳統發電高2倍",
+                "🇰🇷 韓國合作 - SK Engineering合資"
+            ]},
+            {ticker: "IREN", name: "IREN LIMITED", market_cap: "~$6B", sector: "energy", sector_name: "⚡ 能源", status: "原有", highlights: [
+                "💰 比特幣挖礦 - 全球最環保比特幣礦工",
+                "🌱 100%可再生 - 水力/太陽能供電",
+                "🏭 AI數據中心 - HPC業務",
+                "🧊 冰島/加拿大 - 低成本清潔能源"
+            ]},
+            {ticker: "FCEL", name: "FuelCell Energy", market_cap: "~$300M", sector: "energy", sector_name: "⚡ 能源", status: "新增", highlights: [
+                "🔋 碳酸鹽燃料電池 - 工業規模發電",
+                "🌍 碳捕集技術 - 全球首個商業碳捕集",
+                "💰 45Q補貼 - 美國碳捕集稅務優惠",
+                "🌊 海洋應用 - 船舶/海上平台供電"
+            ]},
+            {ticker: "BLDP", name: "Ballard Power", market_cap: "~$500M", sector: "energy", sector_name: "⚡ 能源", status: "新增", highlights: [
+                "🚌 公交車燃料電池 - 全球最大供應商",
+                "🚛 長途貨運 - 氫燃料電池系統",
+                "🚢 船舶零排放 - 海洋應用",
+                "🇨🇳 中國合資 - 濰柴動合作"
+            ]},
+            {ticker: "AGX", name: "Argan Inc", market_cap: "~$4B", sector: "energy", sector_name: "⚡ 能源", status: "新增", highlights: [
+                "🏗️ 數據中心EPC - 設計/建造/調試",
+                "💰 百億訂單 - 美國最大數據中心建設",
+                "🌐 AI需求 - 微軟/Google/Amazon擴張",
+                "📈 營收創新高 - 2024年業績靚"
+            ]},
+            
+            // Semiconductor
+            {ticker: "AVGO", name: "Broadcom", market_cap: "~$1.1T", sector: "semiconductor", sector_name: "💾 半導體", status: "原有", highlights: [
+                "💰 $1.1T市值 - 全球最大半導體公司",
+                "🏆 AI網絡晶片 - Nvidia/Google解決方案",
+                "💼 VMware收購 - $690億企業軟件",
+                "🔧 Google TPU - AI加速器"
+            ]},
+            {ticker: "MU", name: "Micron", market_cap: "~$180B", sector: "semiconductor", sector_name: "💾 半導體", status: "原有", highlights: [
+                "💾 DRAM/HBM領導 - 全球三大DRAM供應商",
+                "🤝 Nvidia合作 - Blackwell GPU提供HBM3e",
+                "🏭 美國工廠 - IDA $6.1B補貼",
+                "📊 估值吸引 - 相對其他AI股偏低"
+            ]},
+            {ticker: "SNDK", name: "SanDisk", market_cap: "~$80B", sector: "semiconductor", sector_name: "💾 半導體", status: "原有", highlights: [
+                "💾 消費存儲 - 全球最大USB/SSD品牌",
+                "🔗 WD合併 - 與Western Digital合併中",
+                "📱 移動存儲 - 手機/平板供應商",
+                "🎬 數據爆炸 - 影片/相片數據增長"
+            ]},
+            {ticker: "AMAT", name: "Applied Materials", market_cap: "~$180B", sector: "semiconductor", sector_name: "💾 半導體", status: "新增", highlights: [
+                "🔧 半導體設備 - 全球最大供應商之一",
+                "🚀 AI芯片製造 - 所有先進AI芯片必須用",
+                "🇨🇳 中國市場 - 半導體擴張受益者",
+                "🔬 先進封裝 - CoWoS設備領導者"
+            ]},
+            
+            // AI
+            {ticker: "NBIS", name: "Nebius Group", market_cap: "~$25B", sector: "ai", sector_name: "☁️ AI", status: "原有", highlights: [
+                "☁️ AI雲計算 - 訓練/推理平台",
+                "💰 Meta $30億合約 - 最大客戶",
+                "🚀 GPU集群 - NVIDIA DGX雲服務",
+                "🌍 歐洲市場 - 主要服務歐洲AI客戶"
+            ]},
+            
+            // Network
+            {ticker: "ONDS", name: "Ondas Holdings", market_cap: "~$400M", sector: "network", sector_name: "📡 網絡", status: "新增", highlights: [
+                "📡 SDR技術 - Software Defined Radio",
+                "🛸 Iron Drone - AI軍事無人機防禦",
+                "🏭 工業物聯網 - 工廠自動化/監控",
+                "💼 國防合約 - 美國國防部客戶"
+            ]},
+            {ticker: "SPAI", name: "SPAI", market_cap: "~$??M", sector: "network", sector_name: "📡 網絡", status: "新增", highlights: [
+                "🤖 AI無人機 - 自主飛行/數據收集",
+                "📡 實時分析 - 邊緣AI計算",
+                "🛸 軍事應用 - 偵察/監控任務",
+                "💰 早期公司 - 高速增長期"
+            ]},
+            
+            // Power
+            {ticker: "ETN", name: "Eaton Corporation", market_cap: "~$100B", sector: "power", sector_name: "⚙️ 電力", status: "原有", highlights: [
+                "⚡ 電力管理 - 全球最大電力管理公司",
+                "💼 數據中心受惠 - AI供電需求大增",
+                "📈 3年升132% - 表現亮麗",
+                "🛩️ 航空液壓 - 商用/軍用飛機"
+            ]},
+            {ticker: "PWR", name: "Quanta Services", market_cap: "~$50B", sector: "power", sector_name: "⚙️ 電力", status: "原有", highlights: [
+                "🏗️ 基建龍頭 - 全球最大電力/電信建設",
+                "💰 IRA法案受惠 - $369B基建投資",
+                "🏭 數據中心建設 - Google/Microsoft",
+                "📈 訂單創新高 - Backlog持續增加"
+            ]},
+            {ticker: "POWL", name: "Powell Industries", market_cap: "~$3B", sector: "power", sector_name: "⚙️ 電力", status: "新增", highlights: [
+                "⚡ 配電設備 - 工業/數據中心配電",
+                "🏭 化工/石油 - 重工業配電專家",
+                "📈 週期復甦 - 工業周期受惠者",
+                "💰 增長空間 - $3B市值潛力大"
+            ]},
+            
+            // Mining
+            {ticker: "CLF", name: "Cleveland-Cliffs", market_cap: "~$6B", sector: "mining", sector_name: "⛏️ 採礦", status: "原有", highlights: [
+                "🪨 鐵礦石/鋼鐵 - 美國最大鐵礦石公司",
+                "🏭 垂直整合 - 鐵礦石+鋼鐵製造",
+                "🚗 Tesla供應 - 鋼材供應商",
+                "🌱 綠色鋼鐵 - 低碳鋼鐵生產"
+            ]},
+            {ticker: "TMQ", name: "Trilogy Metals", market_cap: "~$100M", sector: "mining", sector_name: "⛏️ 採礦", status: "原有", highlights: [
+                "🪨 銅勘探 - 北極銅礦項目",
+                "💰 銅價上漲 - EV/AI需求支持",
+                "🏔️ Bornite項目 - 阿拉斯加銅礦",
+                "💼 South32合資 - 合作開發"
+            ]},
+            {ticker: "UAMY", name: "US Antimony", market_cap: "~$50M", sector: "mining", sector_name: "⛏️ 採礦", status: "原有", highlights: [
+                "💎 美國唯一銻礦 - 銻礦生產商",
+                "🔥 阻燃劑 - 軍事/航天阻燃材料",
+                "🔋 電池合金 - 鉛酸電池材料",
+                "🇨🇳 中國控制 - 全球銻供應緊張"
+            ]},
+            
+            // Geo
+            {ticker: "TRMB", name: "Trimble", market_cap: "~$15B", sector: "geo", sector_name: "🛰️ 定位", status: "原有", highlights: [
+                "🛰️ GNSS定位 - 全球領先GPS技術",
+                "🚜 精準農業 - GPS導航農業機械",
+                "🚗 自動駕駛 - 車載定位解決方案",
+                "💼 軟件訂閱 - 經常性收入模式"
+            ]}
+        ];
+        
+        function renderStocks(filteredStocks) {
+            const grid = document.getElementById('stockGrid');
+            grid.innerHTML = filteredStocks.map(stock => `
+                <div class="stock-card" data-sector="${stock.sector}">
+                    <div class="stock-header">
+                        <span class="ticker">${stock.ticker}</span>
+                        <span class="market-cap">${stock.market_cap}</span>
+                    </div>
+                    <div class="name">${stock.name}</div>
+                    ${stock.priority === 'high' ? `<span class="priority-high">${stock.priority_text}</span>` : ''}
+                    <div>
+                        <span class="sector-tag ${stock.status === '原有' ? 'tag-original' : 'tag-new'}">
+                            ${stock.status}
+                        </span>
+                        <span class="sector-tag" style="background:#f3e5f5;color:#7b1fa2;">
+                            ${stock.sector_name}
+                        </span>
+                    </div>
+                    <div class="description">
+                        <div class="description-title">投資要点</div>
+                        ${stock.highlights.map(h => `<div class="highlight-item">${h}</div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function filterStocks() {
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+            
+            const filtered = stocks.filter(stock => {
+                const matchesSearch = 
+                    stock.ticker.toLowerCase().includes(searchTerm) ||
+                    stock.name.toLowerCase().includes(searchTerm) ||
+                    stock.highlights.some(h => h.toLowerCase().includes(searchTerm));
+                const matchesFilter = 
+                    activeFilter === 'all' || 
+                    activeFilter === 'hot' && stock.priority === 'high' ||
+                    stock.sector === activeFilter;
+                return matchesSearch && matchesFilter;
+            });
+            
+            renderStocks(filtered);
+        }
+        
+        document.getElementById('search').addEventListener('input', filterStocks);
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                filterStocks();
+            });
+        });
+        
+        renderStocks(stocks);
+    </script>
+</body>
+</html>
